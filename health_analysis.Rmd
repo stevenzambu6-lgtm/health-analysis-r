@@ -1,0 +1,99 @@
+---
+title: "90-Day Health Analysis"
+output: html_document
+---
+## setup
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(lubridate)
+dir()
+setwd("C:/Users/user/OneDrive/Desktop/health_project")
+getwd()
+dir()
+health_raw <- read_excel("health_data.xlsx")
+health_raw
+library(tidyverse)
+library(lubridate)
+library(janitor)
+install.packages("janitor")
+library(janitor)
+#Create a clean working dataset
+health <- health_raw |>
+  clean_names() |>
+  mutate(
+    date = as.Date(date),
+    weekday = wday(date, label = TRUE),
+    is_weekend = weekday %in% c("Sat", "Sun")
+  )
+
+glimpse(health)
+# Data summary
+health |>
+  summarise(
+    days = n(),
+    start_date = min(date),
+    end_date = max(date),
+    missing_steps = sum(is.na(steps)),
+    missing_sleep = sum(is.na(sleep_hours))
+  )
+#first plot, steps over time
+ggplot(health, aes(x = date, y = steps)) + 
+  geom_line() + 
+  geom_point()
+#second plot sleep over time
+ggplot(health, aes(x = date, y = sleep_hours)) +
+  geom_line() +
+  geom_point()
+#Compare weekdays vs weekends
+health |>
+  group_by(is_weekend) |>
+  summarise(
+    avg_steps = mean(steps, na.rm = TRUE),
+    avg_sleep = mean(sleep_hours, na.rm = TRUE),
+    days = n()
+  )
+#Visual comparison
+#steps
+ggplot(health, aes(x = is_weekend, y = steps)) +
+  geom_boxplot()
+#sleep
+ggplot(health, aes(x= is_weekend, y = sleep_hours)) +
+  geom_boxplot()
+#Relate sleep and steps
+ggplot(health, aes(x = sleep_hours, y = steps)) +
+  geom_point()
+#Add a trend line
+ggplot(health, aes(x = sleep_hours, y = steps)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+#Scatter plot split by weekend
+ggplot(health, aes(x = sleep_hours, y = steps, color = is_weekend)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+#add title and lable x and y axis
+ggplot(health, aes(x = sleep_hours, y = steps, color = is_weekend)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    color = "Weekend?",
+    x = "Sleep hours",
+    y = "Daily steps",
+    title = "Relationship between sleep and steps by day type"
+  )
+#Resting Heart Rate
+ggplot(health, aes(x = date, y = resting_hr)) +
+  geom_point() +
+  geom_line()
+#Steps vs Resting Heart Rate
+ggplot(health,aes(x = steps, y = resting_hr, color = is_weekend)) + 
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Daily Steps and Resting Heart Rate",
+    x = "steps",
+    y = "resting_hr",
+    color = "is_weekend?"
+    
+  )
